@@ -1,29 +1,31 @@
-// 04_seed_users_guests.mongosh.js
-use("staybook");
+/*
+  Seed users and guests for testing purposes
+*/
 
-// Keep host users you already have. Add guest users for reservations.
-db.users.insertMany([
+db = db.getSiblingDB("staybook");
+
+const users = [
   {
+    email: "guest1@staybook.com",
     name: "Guest One",
-    email: "guest.one@example.com",
-    roles: ["guest"],
-    status: "active",
-    createdAt: new Date("2026-01-02T10:00:00Z")
+    role: "guest",
+    seed: true
   },
   {
+    email: "guest2@staybook.com",
     name: "Guest Two",
-    email: "guest.two@example.com",
-    roles: ["guest"],
-    status: "active",
-    createdAt: new Date("2026-01-03T10:00:00Z")
-  },
-  {
-    name: "Guest Three",
-    email: "guest.three@example.com",
-    roles: ["guest"],
-    status: "active",
-    createdAt: new Date("2026-01-04T10:00:00Z")
+    role: "guest",
+    seed: true
   }
-]);
+];
 
-print("Guest users inserted.");
+// Use upsert to avoid duplicate users when script is executed multiple times
+users.forEach(user => {
+  db.users.updateOne(
+    { email: user.email },
+    { $setOnInsert: user },
+    { upsert: true }
+  );
+});
+
+print("Users seeded successfully.");

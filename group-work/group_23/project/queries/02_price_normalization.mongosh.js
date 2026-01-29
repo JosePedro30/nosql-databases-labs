@@ -1,31 +1,41 @@
-// Normalize listing price from "€40" (string) into price_eur (number) for analytics.
-// Usage: mongosh queries/02_price_normalization.mongosh.js
+/*
+  Normalize listing prices
+  Converts price from string to numeric value in euros
+*/
 
 db = db.getSiblingDB("staybook");
-print("Creating/refreshing numeric field: listings.price_eur");
 
-// Update using a pipeline so we can compute a numeric field.
-const result = db.listings.updateMany(
-  { price: { $type: "string" } },
+db.listings.updateMany(
+  { price: { $exists: true } },
   [
     {
       $set: {
-        price_eur: {
-          $toInt: {
-            $replaceAll: { input: "$price", find: "€", replacement: "" },
-          },
-        },
-      },
+        // Remove currency symbol and thousand separators
+        price_clean: {
+          $replaceAll: {
+            input: {
+              $replaceAll: {
+                input: "$price",
+                find: "€",
+                replacement: ""
+              }
+            },
+            find: ",",
+            replacement: ""
+          }
+        }
+      }
     },
+    {
+      $set: {
+        // Use double to preserve cents (e.g. 99.99)
+        price_eur: { $toDouble: "$price_clean" }
+      }
+    },
+    {
+      $unset: "price_clean"
+    }
   ]
 );
 
-print("Documents matched: " + result.matchedCount);
-print("Documents modified: " + result.modifiedCount);
-
-// Quick sample
-print("Sample documents with price_eur:");
-db.listings
-  .find({ price_eur: { $exists: true } }, { _id: 0, id: 1, price: 1, price_eur: 1 })
-  .limit(5)
-  .forEach((doc) => printjson(doc));
+print("Price normalization completed.");

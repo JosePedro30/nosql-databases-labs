@@ -1,31 +1,39 @@
-// Index blueprint aligned with query patterns (filters, joins, availability checks).
-// Usage: mongosh queries/index_blueprint.mongosh.js
+/*
+  Index blueprint for StayBook project
+  These indexes support the most common queries used in the application
+*/
 
 db = db.getSiblingDB("staybook");
-print("Creating indexes (idempotent):");
 
-// listings: ensure dataset identifier is unique
-db.listings.createIndex({ id: 1 }, { unique: true });
+// INDEXES FOR LISTINGS COLLECTION
 
-// listings: common filters
-db.listings.createIndex({ neighbourhood: 1 });
-db.listings.createIndex({ room_type: 1 });
-db.listings.createIndex({ accommodates: 1 });
-db.listings.createIndex({ price_eur: 1 });
-db.listings.createIndex({ host_id: 1 });
+db.listings.createIndex(
+  { price_eur: 1 },
+  { name: "idx_listings_price" }
+);
 
+db.listings.createIndex(
+  { accommodates: 1 },
+  { name: "idx_listings_accommodates" }
+);
 
+// INDEXES FOR RESERVATIONS COLLECTION
 
-// reservations: availability + user history
-db.reservations.createIndex({ listingId: 1, dateFrom: 1, dateTo: 1, status: 1 });
-db.reservations.createIndex({ guestId: 1, createdAt: -1 });
+/*
+  This index is used to efficiently detect date conflicts
+  when creating or validating reservations
+*/
+db.reservations.createIndex(
+  { listingId: 1, dateFrom: 1, dateTo: 1, status: 1 },
+  { name: "idx_reservation_conflict" }
+);
 
-// reviews: one review per reservation + listing timeline
-db.reviews.createIndex({ reservationId: 1 }, { unique: true });
-db.reviews.createIndex({ listingId: 1, createdAt: -1 });
+/*
+  Index to support queries by guest
+*/
+db.reservations.createIndex(
+  { guestId: 1 },
+  { name: "idx_reservation_guest" }
+);
 
-db.listings.createIndex({ accommodates: 1, price_eur: 1 });
-db.reservations.createIndex({ listingId: 1, status: 1, dateFrom: 1, dateTo: 1 });
-
-
-print("Indexes ready.");
+print("Index blueprint executed successfully.");

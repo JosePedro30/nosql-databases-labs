@@ -1,21 +1,15 @@
-// Import Airbnb datasets into the staybook database
-// Execute with: mongosh import_data.mongosh.js
+/*
+  Script to prepare database before importing data
+  NOTE: Data is imported using MongoDB Compass
+*/
 
-use("staybook");
+// Explicit database selection for scripts
+// Using getSiblingDB is safer than use() in non-interactive scripts
+db = db.getSiblingDB("staybook");
 
-// NOTE:
-// The Airbnb datasets are imported using MongoDB Compass.
-// This script assumes the `listings` collection already exists
-// after importing:
-// - sample_porto_listings.json
-// - sample_lisbon_listings.json
+// Optional cleanup before import
+db.listings.deleteMany({});
+db.reviews.deleteMany({});
+db.reservations.deleteMany({});
 
-print("Database:", db.getName());
-print("Collections:", db.getCollectionNames());
-
-// Create additional collections if they do not exist
-db.createCollection("users");
-db.createCollection("reservations");
-db.createCollection("reviews");
-
-print("Setup completed.");
+print("Database selected and collections cleaned.");
